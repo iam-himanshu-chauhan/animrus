@@ -1,5 +1,4 @@
 pub mod document;
-
 use eframe::egui;
 
 fn main() -> eframe::Result {
@@ -11,7 +10,6 @@ fn main() -> eframe::Result {
             .with_maximized(true),
         ..Default::default()
     };
-
 
     eframe::run_native(
         "Animrus",

@@ -1,3 +1,5 @@
+use super::layer::Layer;
+
 /// Contains artwork and defines when it appears on the timeline.
 pub struct Drawing {
     pub id: u64,
