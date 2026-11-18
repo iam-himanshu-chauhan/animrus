@@ -1,5 +1,6 @@
-pub mod document;
-mod settings;
 mod composition;
-mod track;
+pub mod document;
 mod drawing;
+mod layer;
+mod settings;
+mod track;

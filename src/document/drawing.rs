@@ -4,4 +4,5 @@ pub struct Drawing {
     pub name: String,
     pub start_frame: u32,
     pub duration: u32,
+    pub layers: Vec<Layer>,
 }

@@ -33,6 +33,7 @@ Three core pillars of the application
 * project will be a zip based document - with json data and pngs
 
 ----
+<br/>
 
 1. A Document can contain multiple compositions.
 2. Each composition contains its own independent tracks.
@@ -42,7 +43,18 @@ Three core pillars of the application
 6. Drawings can remain exposed across multiple frames.
 The film sequence references compositions, allowing reuse without duplicatingartwork.
 
+---
+<br/>
 
-## Modules
+**storage and export format**
+* Binary data: Primary storage for editable raster artwork.
+* PNG: Export format, import format, and optional previews.
+* JSON: Project structure and metadata.
+* Raster data is Animrus's native representation of the project's visual artwork.
 
-* Document - document module will handle these things - storing data, writing data and handling data provided nothing else we will have a zip file say .anrs which will contain data document will handle that only saving, opening, loading and giving to other modules for handling
+The complete relationship is:
+- Drawing: Defines when artwork appears on the timeline.
+- Layer: Organizes independently editable artwork.
+- RasterData: Stores the actual visual content.
+- Tiles: Divide raster data into manageable chunks.
+- Pixels: Store the actual RGBA color values.
