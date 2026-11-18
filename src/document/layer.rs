@@ -5,3 +5,14 @@ pub struct Layer {
     pub visible: bool,
     pub opacity: f32,
 }
+
+impl Layer {
+    pub fn new(id: u64, name: String) -> Self {
+        Self {
+            id,
+            name,
+            visible: true,
+            opacity: 1.0,
+        }
+    }
+}
