@@ -4,8 +4,12 @@ mod layer;
 mod settings;
 mod track;
 
-use composition::Composition;
-use settings::DocumentSettings;
+// exporting certain part of module
+pub use composition::Composition;
+pub use drawing::Drawing;
+pub use layer::Layer;
+pub use settings::DocumentSettings;
+pub use track::Track;
 
 pub struct AniRusDocument {
     pub settings: DocumentSettings,

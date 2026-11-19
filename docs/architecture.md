@@ -58,3 +58,10 @@ The complete relationship is:
 - RasterData: Stores the actual visual content.
 - Tiles: Divide raster data into manageable chunks.
 - Pixels: Store the actual RGBA color values.
+
+
+## Rendering
+- Tile based approach - break each layer into tiles and store only where something is
+- GPU do compositing
+- Playback becomes a difference between what is currently on screen and what the next frame needs. Only the tiles that differ are re-blended and re-uploaded.
+- implement parallelism (use multiple cores) viz rayon
