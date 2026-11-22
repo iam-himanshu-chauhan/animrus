@@ -64,4 +64,14 @@ The complete relationship is:
 - Tile based approach - break each layer into tiles and store only where something is
 - GPU do compositing
 - Playback becomes a difference between what is currently on screen and what the next frame needs. Only the tiles that differ are re-blended and re-uploaded.
-- implement parallelism (use multiple cores) viz rayon
+- implement parallelism (use multiple cores) via rayon
+
+## Data optimizatino
+* sparsed tiled raster representation - dividing a large canvas into smaller square pieces and storing only the pieces that actually contain artwork. A layer's raster operations will work on its allocated tiles rather than requiring a full-canvas pixel buffer.
+
+* Dirty rectangles - Updates only modified regions
+* Tile compression- Reduces disk and cache memory
+* Copy-on-write tiles- Avoids duplicating unchanged artwork
+* Tile deduplication- Reuses identical tile data
+* Multi-resolution previews	Speeds up zoomed-out rendering
+* GPU texture caching - Speeds up display and compositing
