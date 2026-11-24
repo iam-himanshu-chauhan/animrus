@@ -1,3 +1,4 @@
+/// using Tile based rendering system - sparse tile algorithm
 use std::collections::HashMap;
 
 ///tile dimension

@@ -1,10 +1,11 @@
-pub struct DocumentSettings{
+/// contains the document settings
+pub struct DocumentSettings {
     pub width: u32,
     pub height: u32,
-    pub frame_rate: u32
+    pub frame_rate: u32,
 }
 
-impl DocumentSettings{
+impl DocumentSettings {
     pub fn new(width: u32, height: u32, frame_rate: u32) -> Self {
         Self {
             width,
