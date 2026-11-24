@@ -9,7 +9,7 @@ pub const TILE_CHANNELS: usize = 4;
 
 pub struct Tile {
     ///flat pixel buffer storing in format [R,G,B,A, R,G,B,A....]
-    pub pixels: Vec<u8>,
+    pixels: Vec<u8>,
 }
 
 impl Tile {
@@ -37,7 +37,7 @@ pub struct RasterData {
     ///grid coordinate of tile `(tile_x, tile_y)` <br/>
     /// increase `tile_x` = move left to right <br/>
     /// increase `tile_y` = move top to bottom
-    pub tiles: HashMap<(u32, u32), Tile>,
+    tiles: HashMap<(u32, u32), Tile>,
 }
 
 impl RasterData {
@@ -96,5 +96,33 @@ impl RasterData {
             let index = ((local_y * TILE_SIZE + local_x) * TILE_CHANNELS as u32) as usize;
             tile.pixels[index..index + 4].copy_from_slice(&color);
         }
+    }
+
+    pub fn clear_tile(&mut self, tile_x: u32, tile_y: u32) {
+        self.tiles.remove(&(tile_x, tile_y));
+    }
+
+    pub fn clear(&mut self) {
+        self.tiles.clear();
+    }
+
+    pub fn is_tile_allocated(&self, tile_x: u32, tile_y: u32) -> bool {
+        self.tiles.contains_key(&(tile_x, tile_y))
+    }
+
+    pub fn get_tile(&self, tile_x: u32, tile_y: u32) -> Option<&Tile> {
+        self.tiles.get(&(tile_x, tile_y))
+    }
+
+    pub fn allocated_tile_count(&self) -> usize {
+        self.tiles.len()
+    }
+
+    pub fn allocated_tile_coordinates(&self) -> Vec<(u32, u32)> {
+        self.tiles.keys().copied().collect()
+    }
+
+    pub fn get_tile_mut(&mut self, tile_x: u32, tile_y: u32) -> Option<&mut Tile> {
+        self.tiles.get_mut(&(tile_x, tile_y))
     }
 }
