@@ -6,8 +6,6 @@ fn layer_creation_test() {
 
     let layer = Layer::new(0, "mylayer".to_string(), &docsettings);
 
-
     assert_eq!(layer.raster.width, 1920);
     assert_eq!(layer.raster.height, 1080);
-    
 }

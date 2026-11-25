@@ -28,6 +28,10 @@ impl Drawing {
         self.layers.iter().find(|c| c.id == id)
     }
 
+    pub fn get_mut_layer(&mut self, id: u64) -> Option<&mut Layer> {
+        self.layers.iter_mut().find(|c| c.id == id)
+    }
+
     pub fn remove_layer(&mut self, id: u64) {
         self.layers.retain(|c| c.id != id);
     }

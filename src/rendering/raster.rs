@@ -18,6 +18,10 @@ impl Tile {
             pixels: vec![0; (TILE_SIZE * TILE_SIZE) as usize * TILE_CHANNELS],
         }
     }
+
+    pub fn get_pixels(&self) -> &[u8] {
+        &self.pixels
+    }
 }
 
 impl Default for Tile {
@@ -118,8 +122,8 @@ impl RasterData {
         self.tiles.len()
     }
 
-    pub fn allocated_tile_coordinates(&self) -> Vec<(u32, u32)> {
-        self.tiles.keys().copied().collect()
+    pub fn allocated_tiles(&self) -> impl Iterator<Item = (u32, u32)> + '_ {
+        self.tiles.keys().copied()
     }
 
     pub fn get_tile_mut(&mut self, tile_x: u32, tile_y: u32) -> Option<&mut Tile> {
