@@ -1,5 +1,5 @@
 /// using Tile based rendering system - sparse tile algorithm
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 ///tile dimension
 pub const TILE_SIZE: u32 = 256;
@@ -42,6 +42,7 @@ pub struct RasterData {
     /// increase `tile_x` = move left to right <br/>
     /// increase `tile_y` = move top to bottom
     tiles: HashMap<(u32, u32), Tile>,
+    dirty_tiles: HashSet<(u32, u32)>,
 }
 
 impl RasterData {
@@ -50,10 +51,11 @@ impl RasterData {
             width,
             height,
             tiles: HashMap::new(),
+            dirty_tiles: HashSet::new(),
         }
     }
 
-    pub fn get_or_create_tile(&mut self, pixel_x: u32, pixel_y: u32) -> Option<&mut Tile> {
+    fn get_or_create_tile(&mut self, pixel_x: u32, pixel_y: u32) -> Option<&mut Tile> {
         if pixel_x >= self.width || pixel_y >= self.height {
             None
         } else {
@@ -99,14 +101,22 @@ impl RasterData {
 
             let index = ((local_y * TILE_SIZE + local_x) * TILE_CHANNELS as u32) as usize;
             tile.pixels[index..index + 4].copy_from_slice(&color);
+
+            self.dirty_tiles
+                .insert((pixel_x / TILE_SIZE, pixel_y / TILE_SIZE));
         }
     }
 
     pub fn clear_tile(&mut self, tile_x: u32, tile_y: u32) {
         self.tiles.remove(&(tile_x, tile_y));
+        self.mark_tile_dirty(tile_x, tile_y);
     }
 
     pub fn clear(&mut self) {
+        for tile_coord in self.tiles.keys() {
+            self.dirty_tiles.insert(*tile_coord);
+        }
+
         self.tiles.clear();
     }
 
@@ -118,15 +128,38 @@ impl RasterData {
         self.tiles.get(&(tile_x, tile_y))
     }
 
+    ///Count the number of tiles
     pub fn allocated_tile_count(&self) -> usize {
         self.tiles.len()
     }
 
+    ///  Gets the allocated tiles
     pub fn allocated_tiles(&self) -> impl Iterator<Item = (u32, u32)> + '_ {
         self.tiles.keys().copied()
     }
 
-    pub fn get_tile_mut(&mut self, tile_x: u32, tile_y: u32) -> Option<&mut Tile> {
+    /// Gets the mutable tile
+    fn get_tile_mut(&mut self, tile_x: u32, tile_y: u32) -> Option<&mut Tile> {
         self.tiles.get_mut(&(tile_x, tile_y))
+    }
+
+    /// Returns the coordinates of all dirty tiles.
+    pub fn dirty_tiles(&self) -> impl Iterator<Item = (u32, u32)> + '_ {
+        self.dirty_tiles.iter().copied()
+    }
+
+    /// Marks a tile as dirty.
+    pub fn mark_tile_dirty(&mut self, tile_x: u32, tile_y: u32) {
+        self.dirty_tiles.insert((tile_x, tile_y));
+    }
+
+    /// Removes one tile from the dirty collection.
+    pub fn clear_dirty_tile(&mut self, tile_x: u32, tile_y: u32) {
+        self.dirty_tiles.remove(&(tile_x, tile_y));
+    }
+
+    /// Removes all dirty tile entries.
+    pub fn clear_all_dirty_tiles(&mut self) {
+        self.dirty_tiles.clear();
     }
 }
