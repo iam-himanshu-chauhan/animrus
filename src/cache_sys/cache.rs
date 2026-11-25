@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
+///Generic cache system which can be utilized wherever heavy computation needs to be reduced
 pub struct Cache<K, V> {
     entries: HashMap<K, V>,
 }

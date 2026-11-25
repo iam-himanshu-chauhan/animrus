@@ -138,11 +138,6 @@ impl RasterData {
         self.tiles.keys().copied()
     }
 
-    /// Gets the mutable tile
-    fn get_tile_mut(&mut self, tile_x: u32, tile_y: u32) -> Option<&mut Tile> {
-        self.tiles.get_mut(&(tile_x, tile_y))
-    }
-
     /// Returns the coordinates of all dirty tiles.
     pub fn dirty_tiles(&self) -> impl Iterator<Item = (u32, u32)> + '_ {
         self.dirty_tiles.iter().copied()
