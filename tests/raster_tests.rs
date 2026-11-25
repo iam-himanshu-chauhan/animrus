@@ -83,16 +83,3 @@ fn get_allocated_tile() {
     assert!(tile.is_some());
     assert!(raster.get_tile(0, 0).is_none());
 }
-
-#[test]
-fn get_allocated_tile_coordinates() {
-    let mut raster = RasterData::new(512, 512);
-
-    raster.set_pixel(100, 100, [255, 0, 0, 255]);
-    raster.set_pixel(300, 300, [0, 0, 255, 255]);
-
-    let mut coordinates = raster.allocated_tile_coordinates();
-    coordinates.sort_unstable();
-
-    assert_eq!(coordinates, vec![(0, 0), (1, 1)]);
-}

@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
 use crate::dochandler::{DocumentSettings, Drawing};
-use crate::rendering::raster::TILE_SIZE;
+use crate::rendering::raster::{TILE_CHANNELS, TILE_SIZE};
 
 /// Combines one pixel across layers.
 pub fn composite_pixels(drawing: &Drawing, x: u32, y: u32) -> [u8; 4] {
     let mut result = [0u8; 4];
 
     for layer in &drawing.layers {
-        if !layer.visible {
+        if !layer.visible || layer.opacity <= 0.0 {
             continue;
         }
 
@@ -66,7 +66,7 @@ pub fn composite_drawing(drawing: &Drawing, settings: &DocumentSettings) -> Vec<
     let mut occupied_tiles = HashSet::new();
 
     for layer in &drawing.layers {
-        if !layer.visible {
+        if !layer.visible || layer.opacity <= 0.0 {
             continue;
         }
 
@@ -83,13 +83,45 @@ pub fn composite_drawing(drawing: &Drawing, settings: &DocumentSettings) -> Vec<
         let end_x = start_x.saturating_add(TILE_SIZE).min(width);
         let end_y = start_y.saturating_add(TILE_SIZE).min(height);
 
+        // Get each layer's tile buffer only once.
+        let mut layer_tiles = Vec::new();
+
+        for layer in &drawing.layers {
+            if !layer.visible || layer.opacity <= 0.0 {
+                continue;
+            }
+
+            if let Some(tile) = layer.raster.get_tile(tile_x, tile_y) {
+                layer_tiles.push((tile.get_pixels(), layer.opacity.clamp(0.0, 1.0)));
+            }
+        }
+
+        // Process pixels directly from the tile buffers.
         for y in start_y..end_y {
             for x in start_x..end_x {
-                let pixel = composite_pixels(drawing, x, y);
+                let local_x = x % TILE_SIZE;
+                let local_y = y % TILE_SIZE;
 
-                let index = ((y as usize * width as usize) + x as usize) * 4;
+                let tile_index = ((local_y * TILE_SIZE + local_x) as usize) * TILE_CHANNELS;
 
-                output[index..index + 4].copy_from_slice(&pixel);
+                let mut result = [0u8; 4];
+
+                for (pixels, opacity) in &layer_tiles {
+                    let mut source: [u8; 4] =
+                        pixels[tile_index..tile_index + 4].try_into().unwrap();
+
+                    source[3] = (source[3] as f32 * opacity).round() as u8;
+
+                    if source[3] == 0 {
+                        continue;
+                    }
+
+                    result = blend_over(result, source);
+                }
+
+                let output_index = ((y as usize * width as usize) + x as usize) * 4;
+
+                output[output_index..output_index + 4].copy_from_slice(&result);
             }
         }
     }
