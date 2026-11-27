@@ -28,6 +28,8 @@ impl CompositorCache {
         for layer in &mut drawing.layers {
             layer.raster.clear_all_dirty_tiles();
         }
+
+        drawing.clear_composite_dirty_tiles();
     }
 
     /// Gets a cached composite tile.

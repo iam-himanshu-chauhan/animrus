@@ -177,6 +177,10 @@ pub fn collect_dirty_tiles(drawing: &Drawing) -> HashSet<(u32, u32)> {
             collected_tiles.insert(tile);
         }
     }
+
+    for tile in drawing.composite_dirty_tiles() {
+        collected_tiles.insert(tile);
+    }
     collected_tiles
 }
 
