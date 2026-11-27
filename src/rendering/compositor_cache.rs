@@ -1,7 +1,7 @@
 use crate::{
     cache_sys::cache::Cache,
     dochandler::{DocumentSettings, Drawing},
-    rendering::compositor::composite_dirty_tiles,
+    rendering::compositor::{collect_dirty_tiles, composite_dirty_tiles},
 };
 
 /// Stores composited tile pixel buffers.
@@ -17,7 +17,13 @@ impl CompositorCache {
     }
 
     /// Recomputes dirty tiles and updates their cached results.
-    pub fn update(&mut self, drawing: &mut Drawing, settings: &DocumentSettings) {
+    pub fn update(&mut self, drawing: &mut Drawing, settings: &DocumentSettings) -> bool {
+        let dirty_tiles = collect_dirty_tiles(drawing);
+
+        if dirty_tiles.is_empty() {
+            return false;
+        }
+
         let updated_tiles = composite_dirty_tiles(drawing, settings);
 
         for ((tile_x, tile_y), pixels) in updated_tiles {
@@ -30,6 +36,7 @@ impl CompositorCache {
         }
 
         drawing.clear_composite_dirty_tiles();
+        true
     }
 
     /// Gets a cached composite tile.

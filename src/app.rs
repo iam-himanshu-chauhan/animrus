@@ -54,11 +54,11 @@ impl AnimrusApp {
         app
     }
 
-    fn update_compositor(&mut self) {
+    fn update_compositor(&mut self) -> bool {
         let drawing = &mut self.document.compositions[0].tracks[0].drawings[0];
 
         self.compositor_cache
-            .update(drawing, &self.document.settings);
+            .update(drawing, &self.document.settings)
     }
 
     fn build_canvas_image(&self) -> egui::ColorImage {
@@ -136,12 +136,32 @@ impl eframe::App for AnimrusApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
 
-        if self.canvas_texture.is_none() {
+        let canvas_changed = self.update_compositor();
+
+        println!("Canvas changed: {canvas_changed}");
+
+        if canvas_changed || self.canvas_texture.is_none() {
+            println!("Updating GPU texture");
             self.update_canvas_texture(&ctx);
         }
 
         ui.heading("Animrus Canvas");
         ui.separator();
+
+        if ui.button("Change Canvas").clicked() {
+            println!("Button clicked!");
+
+            let drawing = &mut self.document.compositions[0].tracks[0].drawings[0];
+            let layer = &mut drawing.layers[0];
+
+            for y in 200..300 {
+                for x in 200..300 {
+                    layer.raster.set_pixel(x, y, [255, 0, 0, 255]);
+                }
+            }
+
+            ui.ctx().request_repaint();
+        }
 
         if let Some(texture) = &self.canvas_texture {
             let available_size = ui.available_size();

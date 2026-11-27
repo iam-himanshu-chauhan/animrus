@@ -1,7 +1,7 @@
-mod anirus;
+mod app;
 use eframe::egui;
 
-use crate::anirus::AnimrusApp;
+use crate::app::AnimrusApp;
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
