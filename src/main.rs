@@ -1,5 +1,7 @@
-#![allow(dead_code)]
+mod anirus;
 use eframe::egui;
+
+use crate::anirus::AnimrusApp;
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -17,31 +19,7 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
-            Ok(Box::new(AnimrusApp::default()))
+            Ok(Box::new(AnimrusApp::new()))
         }),
     )
-}
-
-#[derive(Default)]
-struct AnimrusApp {
-    // Application state will live here.
-}
-
-impl eframe::App for AnimrusApp {
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ui, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.add_space(180.0);
-
-                ui.heading("ANIMRUS");
-                ui.label("Raster Animation Studio");
-
-                ui.add_space(24.0);
-
-                if ui.button("Create New Project").clicked() {
-                    println!("Create project clicked");
-                }
-            });
-        });
-    }
 }
