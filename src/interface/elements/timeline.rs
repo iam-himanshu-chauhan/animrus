@@ -1,23 +1,22 @@
 use egui::{RichText, Ui};
 
-use super::{panel::Panel, theme::AnimrusTheme};
+use crate::interface::{components::panel::Panel, theme::AnimrusTheme};
 
 pub struct Timeline;
 
 impl Timeline {
     pub fn show(ui: &mut Ui) {
-        Panel::frame().show(ui, |ui| {
-            ui.vertical(|ui| {
-                Self::toolbar(ui);
+        ui.vertical(|ui| {
+            Self::toolbar(ui);
+            Panel::separator(ui);
 
-                Panel::separator(ui);
-
-                Self::ruler(ui);
-
-                Panel::separator(ui);
-
-                Self::tracks(ui);
-            });
+            egui::ScrollArea::both()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    Self::ruler(ui);
+                    Panel::separator(ui);
+                    Self::tracks(ui);
+                });
         });
     }
 

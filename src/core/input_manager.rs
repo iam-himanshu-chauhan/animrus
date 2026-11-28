@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::hash::Hash;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct InputAction(String);
@@ -14,8 +13,9 @@ impl InputAction {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum InputState {
+    #[default]
     Idle,
     Pressed,
     Held,
@@ -29,50 +29,49 @@ pub enum InputBinding {
     MouseWheel,
 }
 
+#[derive(Default)]
+pub struct ActionData {
+    bindings: Vec<InputBinding>,
+    state: InputState,
+    value: egui::Vec2,
+}
+
 pub struct InputManager {
-    bindings: HashMap<InputAction, Vec<InputBinding>>,
-    states: HashMap<InputAction, InputState>,
-    values: HashMap<InputAction, egui::Vec2>,
+    actions: HashMap<InputAction, ActionData>,
 }
 
 impl InputManager {
     pub fn new() -> Self {
         Self {
-            bindings: HashMap::new(),
-            states: HashMap::new(),
-            values: HashMap::new(),
+            actions: HashMap::new(),
         }
     }
 
     pub fn bind(&mut self, action: InputAction, binding: InputBinding) {
-        let bindings = self.bindings.entry(action).or_default();
+        let action_data = self.actions.entry(action).or_default();
 
-        if !bindings.contains(&binding) {
-            bindings.push(binding);
+        if !action_data.bindings.contains(&binding) {
+            action_data.bindings.push(binding);
         }
     }
 
     pub fn unbind(&mut self, action: &InputAction, binding: &InputBinding) {
-        if let Some(bindings) = self.bindings.get_mut(action) {
-            bindings.retain(|b| b != binding);
-
-            if bindings.is_empty() {
-                self.bindings.remove(action);
-            }
+        if let Some(action_data) = self.actions.get_mut(action) {
+            action_data.bindings.retain(|b| b != binding);
         }
     }
 
     pub fn update(&mut self, ctx: &egui::Context) {
-        for (action, bindings) in &self.bindings {
-            let previous_state = self.action_state(action);
+        for action_data in self.actions.values_mut() {
+            let previous_state = action_data.state;
+
+            let mut is_down = false;
+            let mut was_pressed = false;
+            let mut was_released = false;
             let mut wheel_delta = egui::Vec2::ZERO;
 
-            let (is_down, was_pressed, was_released, _wheel_moved) = ctx.input(|input| {
-                let mut is_down = false;
-                let mut was_pressed = false;
-                let mut was_released = false;
-
-                for binding in bindings {
+            ctx.input(|input| {
+                for binding in &action_data.bindings {
                     match binding {
                         InputBinding::Key(key) => {
                             is_down |= input.key_down(*key);
@@ -91,19 +90,13 @@ impl InputManager {
                         }
                     }
                 }
-
-                if wheel_delta != egui::Vec2::ZERO {
-                    self.values.insert(action.clone(), wheel_delta);
-                } else {
-                    self.values.insert(action.clone(), egui::Vec2::ZERO);
-                }
-
-                (is_down, was_pressed, was_released, wheel_delta)
             });
+
+            action_data.value = wheel_delta;
 
             let wheel_moved = wheel_delta != egui::Vec2::ZERO;
 
-            let state = if wheel_moved || was_pressed {
+            action_data.state = if wheel_moved || was_pressed {
                 InputState::Pressed
             } else if is_down {
                 InputState::Held
@@ -114,21 +107,27 @@ impl InputManager {
             } else {
                 InputState::Idle
             };
-
-            self.states.insert(action.clone(), state);
         }
     }
 
     pub fn get_bindings(&self, action: &InputAction) -> Option<&[InputBinding]> {
-        self.bindings.get(action).map(Vec::as_slice)
+        self.actions
+            .get(action)
+            .map(|data| data.bindings.as_slice())
     }
 
     pub fn action_value(&self, action: &InputAction) -> egui::Vec2 {
-        self.values.get(action).copied().unwrap_or(egui::Vec2::ZERO)
+        self.actions
+            .get(action)
+            .map(|data| data.value)
+            .unwrap_or(egui::Vec2::ZERO)
     }
 
     pub fn action_state(&self, action: &InputAction) -> InputState {
-        self.states.get(action).copied().unwrap_or(InputState::Idle)
+        self.actions
+            .get(action)
+            .map(|data| data.state)
+            .unwrap_or(InputState::Idle)
     }
 
     pub fn is_pressed(&self, action: &InputAction) -> bool {

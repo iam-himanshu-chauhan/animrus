@@ -1,13 +1,6 @@
-pub mod cache_sys;
-pub mod core;
-pub mod dochandler;
-pub mod interface;
-pub mod rendering;
-
-use core::app::AnimrusApp;
+use animrus::core::app::AnimrusApp;
+use animrus::interface::theme::AnimrusTheme;
 use eframe::egui;
-
-use crate::interface::theme::AnimrusTheme;
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {

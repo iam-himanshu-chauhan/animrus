@@ -1,6 +1,6 @@
 use egui::{Frame, Margin, Stroke, Ui};
 
-use super::theme::AnimrusTheme;
+use crate::interface::theme::AnimrusTheme;
 
 pub struct Panel;
 
@@ -23,19 +23,21 @@ impl Panel {
         );
     }
 
-    /// Draws a subtle separator.
+    /// Draws a subtle separator bounded to the current available width.
     pub fn separator(ui: &mut Ui) {
         ui.add_space(4.0);
 
-        ui.painter().hline(
-            ui.min_rect().left()..=ui.max_rect().right(),
-            ui.cursor().top(),
+        let x_range = ui.available_rect_before_wrap().x_range();
+        let y = ui.cursor().top();
+
+        ui.painter().with_clip_rect(ui.clip_rect()).hline(
+            x_range,
+            y,
             Stroke::new(1.0, AnimrusTheme::BORDER),
         );
 
         ui.add_space(4.0);
     }
-
     /// Draws secondary panel text.
     pub fn secondary_text(ui: &mut Ui, text: &str) {
         ui.label(

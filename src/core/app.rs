@@ -1,7 +1,6 @@
-use crate::interface::layerpanel::LayerPanel;
-use crate::interface::menu::Menu;
-use crate::interface::theme::AnimrusTheme;
-use crate::interface::timeline::Timeline;
+use crate::interface::components::menu::Menu;
+use crate::interface::elements::layerpanel::LayerPanel;
+use crate::interface::elements::timeline::Timeline;
 
 use super::input_manager::{InputAction, InputBinding, InputManager};
 
@@ -23,7 +22,6 @@ pub struct AnimrusApp {
     canvas_zoom: f32,
     canvas_offset: egui::Vec2,
     canvas_zoom_action: InputAction,
-    canvas_pan_action: InputAction,
     canvas_background: egui::Color32,
 }
 
@@ -57,16 +55,10 @@ impl AnimrusApp {
         document.add_composition(composition);
 
         let canvas_zoom_action = InputAction::new("canvas.zoom");
-        let canvas_pan_action = InputAction::new("canvas.pan");
 
         let mut local_input_manager = InputManager::new();
 
         local_input_manager.bind(canvas_zoom_action.clone(), InputBinding::MouseWheel);
-
-        local_input_manager.bind(
-            canvas_pan_action.clone(),
-            InputBinding::MouseButton(egui::PointerButton::Middle),
-        );
 
         let mut app = Self {
             document,
@@ -74,7 +66,6 @@ impl AnimrusApp {
             canvas_texture: None,
             input_manager: local_input_manager,
             canvas_zoom_action,
-            canvas_pan_action,
             canvas_zoom: 1.0,
             canvas_offset: egui::Vec2::ZERO,
             canvas_background: egui::Color32::from_rgb(45, 45, 45),
@@ -146,23 +137,6 @@ impl AnimrusApp {
     }
 
     fn show_canvas(&mut self, ui: &mut egui::Ui) {
-        ui.heading("Animrus Canvas");
-        ui.separator();
-
-        // Temporary test button
-        if ui.button("Change Canvas").clicked() {
-            let drawing = &mut self.document.compositions[0].tracks[0].drawings[0];
-            let layer = &mut drawing.layers[0];
-
-            for y in 200..300 {
-                for x in 200..300 {
-                    layer.raster.set_pixel(x, y, [255, 0, 0, 255]);
-                }
-            }
-
-            ui.ctx().request_repaint();
-        }
-
         // Allocate canvas viewport
         let available_size = ui.available_size();
 
@@ -236,6 +210,8 @@ impl AnimrusApp {
         egui::Panel::bottom("timeline_panel")
             .resizable(true)
             .default_size(230.0)
+            .min_size(110.0)
+            .max_size(420.0)
             .show(ui, |ui| {
                 Timeline::show(ui);
             });
@@ -244,10 +220,11 @@ impl AnimrusApp {
         egui::Panel::right("layers_panel")
             .resizable(true)
             .default_size(250.0)
+            .min_size(175.0)
+            .max_size(420.0)
             .show(ui, |ui| {
                 LayerPanel::show(ui);
             });
-
         // Remaining space is the canvas viewport
         self.show_canvas(ui);
     }

@@ -1,26 +1,30 @@
 use egui::{RichText, Ui};
 
-use super::{panel::Panel, theme::AnimrusTheme};
+use crate::interface::{components::panel::Panel, theme::AnimrusTheme};
 
 pub struct LayerPanel;
 
 impl LayerPanel {
     pub fn show(ui: &mut Ui) {
-        Panel::frame().show(ui, |ui| {
-            ui.vertical(|ui| {
-                Self::header(ui);
+        egui::ScrollArea::both()
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                Panel::frame().show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        Self::header(ui);
 
-                Panel::separator(ui);
+                        Panel::separator(ui);
 
-                Self::layer_item(ui, "Sketch", true);
-                Self::layer_item(ui, "Color", false);
-                Self::layer_item(ui, "Background", false);
+                        Self::layer_item(ui, "Sketch", true);
+                        Self::layer_item(ui, "Color", false);
+                        Self::layer_item(ui, "Background", false);
 
-                ui.add_space(8.0);
+                        ui.add_space(8.0);
 
-                Panel::secondary_text(ui, "3 layers");
+                        Panel::secondary_text(ui, "3 layers");
+                    });
+                });
             });
-        });
     }
 
     fn header(ui: &mut Ui) {
@@ -28,8 +32,8 @@ impl LayerPanel {
             Panel::heading(ui, "Layers");
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.button("⋯");
-                ui.button("+");
+                if ui.small_button("⋯").clicked() {}
+                if ui.small_button("+").clicked() {}
             });
         });
     }
