@@ -1,4 +1,6 @@
 # Animrus
+<img src="./assets/logo.png" width="150">
+
 A <u>**raster based frame by frame animation software**</u> inspired from Autodesk Sketchbook and Adobe Animate.
 
 ## Currently under development

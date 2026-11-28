@@ -1,6 +1,11 @@
-use crate::input_manager::{InputAction, InputBinding, InputManager};
+use crate::interface::layerpanel::LayerPanel;
+use crate::interface::menu::Menu;
+use crate::interface::theme::AnimrusTheme;
+use crate::interface::timeline::Timeline;
 
-use super::{
+use super::input_manager::{InputAction, InputBinding, InputManager};
+
+use super::super::{
     dochandler::{AniRusDocument, Composition, DocumentSettings, Drawing, Layer, Track},
     rendering::compositor_cache::CompositorCache,
 };
@@ -139,39 +144,12 @@ impl AnimrusApp {
                 Some(ctx.load_texture("animrus_canvas", image, egui::TextureOptions::NEAREST));
         }
     }
-}
 
-fn draw_sample_artwork(layer: &mut Layer) {
-    let center_x = 256;
-    let center_y = 256;
-    let radius = 100;
-
-    for y in 0..512 {
-        for x in 0..512 {
-            let dx = x as i32 - center_x;
-            let dy = y as i32 - center_y;
-
-            if dx * dx + dy * dy <= radius * radius {
-                layer.raster.set_pixel(x, y, [50, 160, 255, 255]);
-            }
-        }
-    }
-}
-
-impl eframe::App for AnimrusApp {
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        self.input_manager.update(ui.ctx());
-
-        let ctx = ui.ctx().clone();
-        let canvas_changed = self.update_compositor();
-
-        if canvas_changed || self.canvas_texture.is_none() {
-            self.update_canvas_texture(&ctx);
-        }
-
+    fn show_canvas(&mut self, ui: &mut egui::Ui) {
         ui.heading("Animrus Canvas");
         ui.separator();
 
+        // Temporary test button
         if ui.button("Change Canvas").clicked() {
             let drawing = &mut self.document.compositions[0].tracks[0].drawings[0];
             let layer = &mut drawing.layers[0];
@@ -185,6 +163,7 @@ impl eframe::App for AnimrusApp {
             ui.ctx().request_repaint();
         }
 
+        // Allocate canvas viewport
         let available_size = ui.available_size();
 
         let (viewport_rect, _response) =
@@ -231,10 +210,10 @@ impl eframe::App for AnimrusApp {
 
             let painter = ui.painter().with_clip_rect(viewport_rect);
 
-            // Draw the canvas surface behind the artwork.
+            // Canvas surface
             painter.rect_filled(image_rect, 0.0, egui::Color32::WHITE);
 
-            // Draw the artwork.
+            // Artwork
             painter.image(
                 texture.id(),
                 image_rect,
@@ -242,5 +221,69 @@ impl eframe::App for AnimrusApp {
                 egui::Color32::WHITE,
             );
         }
+    }
+
+    fn show_interface(&mut self, ui: &mut egui::Ui) {
+        // Top menu
+        egui::Panel::top("top_menu")
+            .resizable(false)
+            .default_size(48.0)
+            .show(ui, |ui| {
+                Menu::show(ui);
+            });
+
+        // Bottom timeline
+        egui::Panel::bottom("timeline_panel")
+            .resizable(true)
+            .default_size(230.0)
+            .show(ui, |ui| {
+                Timeline::show(ui);
+            });
+
+        // Right layers panel
+        egui::Panel::right("layers_panel")
+            .resizable(true)
+            .default_size(250.0)
+            .show(ui, |ui| {
+                LayerPanel::show(ui);
+            });
+
+        // Central canvas — always last
+        egui::CentralPanel::default().show(ui, |ui| {
+            // Move your existing canvas rendering code here.
+        });
+    }
+}
+
+fn draw_sample_artwork(layer: &mut Layer) {
+    let center_x = 256;
+    let center_y = 256;
+    let radius = 100;
+
+    for y in 0..512 {
+        for x in 0..512 {
+            let dx = x as i32 - center_x;
+            let dy = y as i32 - center_y;
+
+            if dx * dx + dy * dy <= radius * radius {
+                layer.raster.set_pixel(x, y, [50, 160, 255, 255]);
+            }
+        }
+    }
+}
+
+impl eframe::App for AnimrusApp {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        self.input_manager.update(ui.ctx());
+
+        let ctx = ui.ctx().clone();
+
+        let canvas_changed = self.update_compositor();
+
+        if canvas_changed || self.canvas_texture.is_none() {
+            self.update_canvas_texture(&ctx);
+        }
+
+        self.show_interface(ui);
     }
 }

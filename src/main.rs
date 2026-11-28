@@ -1,5 +1,13 @@
-use animrus::app::AnimrusApp;
+pub mod cache_sys;
+pub mod core;
+pub mod dochandler;
+pub mod interface;
+pub mod rendering;
+
+use core::app::AnimrusApp;
 use eframe::egui;
+
+use crate::interface::theme::AnimrusTheme;
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -17,6 +25,7 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
+            AnimrusTheme::apply(&cc.egui_ctx);
             Ok(Box::new(AnimrusApp::new("Learning".into())))
         }),
     )
