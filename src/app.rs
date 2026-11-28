@@ -1,4 +1,6 @@
-use animrus::{
+use crate::input_manager::{InputAction, InputBinding, InputManager};
+
+use super::{
     dochandler::{AniRusDocument, Composition, DocumentSettings, Drawing, Layer, Track},
     rendering::compositor_cache::CompositorCache,
 };
@@ -12,12 +14,18 @@ pub struct AnimrusApp {
 
     /// holds GPU texture displayed by egui
     canvas_texture: Option<egui::TextureHandle>,
+    input_manager: InputManager,
+    canvas_zoom: f32,
+    canvas_offset: egui::Vec2,
+    canvas_zoom_action: InputAction,
+    canvas_pan_action: InputAction,
+    canvas_background: egui::Color32,
 }
 
 impl AnimrusApp {
-    pub fn new() -> Self {
+    pub fn new(name: String) -> Self {
         // 1. Create document settings
-        let settings = DocumentSettings::new(512, 512, 24);
+        let settings = DocumentSettings::new(name, 512, 512, 24);
 
         // 2. Create document
         let mut document = AniRusDocument::new(settings);
@@ -43,10 +51,28 @@ impl AnimrusApp {
         composition.add_track(track);
         document.add_composition(composition);
 
+        let canvas_zoom_action = InputAction::new("canvas.zoom");
+        let canvas_pan_action = InputAction::new("canvas.pan");
+
+        let mut local_input_manager = InputManager::new();
+
+        local_input_manager.bind(canvas_zoom_action.clone(), InputBinding::MouseWheel);
+
+        local_input_manager.bind(
+            canvas_pan_action.clone(),
+            InputBinding::MouseButton(egui::PointerButton::Middle),
+        );
+
         let mut app = Self {
             document,
             compositor_cache: CompositorCache::new(),
             canvas_texture: None,
+            input_manager: local_input_manager,
+            canvas_zoom_action,
+            canvas_pan_action,
+            canvas_zoom: 1.0,
+            canvas_offset: egui::Vec2::ZERO,
+            canvas_background: egui::Color32::from_rgb(45, 45, 45),
         };
 
         app.update_compositor();
@@ -134,14 +160,12 @@ fn draw_sample_artwork(layer: &mut Layer) {
 
 impl eframe::App for AnimrusApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        let ctx = ui.ctx().clone();
+        self.input_manager.update(ui.ctx());
 
+        let ctx = ui.ctx().clone();
         let canvas_changed = self.update_compositor();
 
-        println!("Canvas changed: {canvas_changed}");
-
         if canvas_changed || self.canvas_texture.is_none() {
-            println!("Updating GPU texture");
             self.update_canvas_texture(&ctx);
         }
 
@@ -149,8 +173,6 @@ impl eframe::App for AnimrusApp {
         ui.separator();
 
         if ui.button("Change Canvas").clicked() {
-            println!("Button clicked!");
-
             let drawing = &mut self.document.compositions[0].tracks[0].drawings[0];
             let layer = &mut drawing.layers[0];
 
@@ -163,19 +185,62 @@ impl eframe::App for AnimrusApp {
             ui.ctx().request_repaint();
         }
 
+        let available_size = ui.available_size();
+
+        let (viewport_rect, _response) =
+            ui.allocate_exact_size(available_size, egui::Sense::hover());
+
+        // Background
+        ui.painter()
+            .rect_filled(viewport_rect, 0.0, self.canvas_background);
+
+        // Zoom using Input Manager
+        let pointer_pos = ui.input(|i| i.pointer.hover_pos());
+
+        let zoom_delta = self.input_manager.action_value(&self.canvas_zoom_action).y;
+
+        if let Some(pointer_pos) = pointer_pos
+            && viewport_rect.contains(pointer_pos)
+            && zoom_delta != 0.0
+        {
+            let old_zoom = self.canvas_zoom;
+
+            self.canvas_zoom = (old_zoom * (zoom_delta * 0.01).exp()).clamp(0.1, 8.0);
+
+            let zoom_ratio = self.canvas_zoom / old_zoom;
+
+            self.canvas_offset = pointer_pos
+                - viewport_rect.center()
+                - (pointer_pos - viewport_rect.center() - self.canvas_offset) * zoom_ratio;
+        }
+
+        // Draw canvas
         if let Some(texture) = &self.canvas_texture {
-            let available_size = ui.available_size();
             let image_size = texture.size_vec2();
 
-            let scale = (available_size.x / image_size.x)
-                .min(available_size.y / image_size.y)
+            let fit_scale = (viewport_rect.width() / image_size.x)
+                .min(viewport_rect.height() / image_size.y)
                 .min(1.0);
 
-            let display_size = image_size * scale;
+            let display_size = image_size * fit_scale * self.canvas_zoom;
 
-            ui.centered_and_justified(|ui| {
-                ui.image((texture.id(), display_size));
-            });
+            let image_rect = egui::Rect::from_center_size(
+                viewport_rect.center() + self.canvas_offset,
+                display_size,
+            );
+
+            let painter = ui.painter().with_clip_rect(viewport_rect);
+
+            // Draw the canvas surface behind the artwork.
+            painter.rect_filled(image_rect, 0.0, egui::Color32::WHITE);
+
+            // Draw the artwork.
+            painter.image(
+                texture.id(),
+                image_rect,
+                egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)),
+                egui::Color32::WHITE,
+            );
         }
     }
 }

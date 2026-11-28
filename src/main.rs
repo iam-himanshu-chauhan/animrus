@@ -1,7 +1,5 @@
-mod app;
+use animrus::app::AnimrusApp;
 use eframe::egui;
-
-use crate::app::AnimrusApp;
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -19,7 +17,7 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
-            Ok(Box::new(AnimrusApp::new()))
+            Ok(Box::new(AnimrusApp::new("Learning".into())))
         }),
     )
 }
