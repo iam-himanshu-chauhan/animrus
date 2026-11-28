@@ -248,10 +248,8 @@ impl AnimrusApp {
                 LayerPanel::show(ui);
             });
 
-        // Central canvas — always last
-        egui::CentralPanel::default().show(ui, |ui| {
-            // Move your existing canvas rendering code here.
-        });
+        // Remaining space is the canvas viewport
+        self.show_canvas(ui);
     }
 }
 
